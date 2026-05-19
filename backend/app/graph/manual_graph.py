@@ -15,7 +15,9 @@ class ManualGraphState(TypedDict):
     context: str
     answer: str
     sources: list[dict[str, Any]]
-
+    has_context: bool
+    min_score: float | None
+    max_relevance_score: float
 
 def retrieve_context(state: ManualGraphState) -> ManualGraphState:
     chunks = search_similar_chunks(
@@ -24,15 +26,24 @@ def retrieve_context(state: ManualGraphState) -> ManualGraphState:
         k=state["k"],
     )
 
-    context = build_context_from_chunks(chunks)
+    min_score = None
 
-    has_context = len(chunks) > 0 and bool(context.strip())
+    if chunks:
+        min_score = min(chunk["score"] for chunk in chunks)
+
+    has_relevant_context = (
+        min_score is not None
+        and min_score <= state["max_relevance_score"]
+    )
+
+    context = build_context_from_chunks(chunks) if has_relevant_context else ""
 
     return {
         **state,
         "chunks": chunks,
         "context": context,
-        "has_context": has_context,
+        "has_context": has_relevant_context,
+        "min_score": min_score,
     }
 
 def should_generate_answer(state: ManualGraphState) -> str:
@@ -44,7 +55,10 @@ def should_generate_answer(state: ManualGraphState) -> str:
 def answer_not_found(state: ManualGraphState) -> ManualGraphState:
     return {
         **state,
-        "answer": "Não encontrei informações suficientes no manual para responder essa pergunta.",
+        "answer": (
+            "Não encontrei informações suficientemente relevantes no manual "
+            "para responder essa pergunta com segurança."
+        ),
     }
 
 def generate_answer(state: ManualGraphState) -> ManualGraphState:
@@ -144,6 +158,8 @@ def answer_question_with_manual_graph(
             "answer": "",
             "sources": [],
             "has_context": False,
+            "min_score": None,
+            "max_relevance_score": 1.2,
         }
     )
 
@@ -152,13 +168,3 @@ def answer_question_with_manual_graph(
         "answer": result["answer"],
         "sources": result["sources"],
     }
-
-class ManualGraphState(TypedDict):
-    collection_name: str
-    question: str
-    k: int
-    chunks: list[dict[str, Any]]
-    context: str
-    answer: str
-    sources: list[dict[str, Any]]
-    has_context: bool
