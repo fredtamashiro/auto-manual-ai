@@ -26,6 +26,9 @@ backend/app/storage/uploads/*
 backend/app/storage/chunks/*
 !backend/app/storage/chunks/.gitkeep
 
+# Documents registry
+backend/app/storage/documents_registry.json
+
 # Test and tooling caches
 .pytest_cache/
 .mypy_cache/

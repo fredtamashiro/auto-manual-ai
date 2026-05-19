@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.services.chunk_service import save_chunks_to_json, split_text_into_chunks
@@ -7,10 +9,82 @@ from app.services.vector_store_service import (
     search_similar_chunks,
 )
 
+from app.services.document_registry_service import (
+    list_registered_documents,
+    register_document,
+)
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter(
     prefix="/documents",
     tags=["Documents"],
 )
+
+@router.get("")
+def list_documents():
+    documents = list_registered_documents()
+
+    return {
+        "total": len(documents),
+        "documents": documents,
+    }
+
+@router.post("/ingest")
+def ingest_document(
+    file: UploadFile = File(...),
+    chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+):
+    try:
+        saved_file = save_uploaded_file(file)
+
+        extracted_text = extract_text_from_pdf(saved_file["path"])
+
+        chunks = split_text_into_chunks(
+            pages=extracted_text["pages"],
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+
+        saved_chunks = save_chunks_to_json(
+            chunks=chunks,
+            source_file_path=extracted_text["file_path"],
+        )
+
+        indexed_document = index_chunks_in_vectorstore(
+            chunks_file=saved_chunks["chunks_file"],
+        )
+
+        document_payload = {
+            "original_filename": saved_file["original_filename"],
+            "stored_filename": saved_file["stored_filename"],
+            "file_path": saved_file["path"],
+            "document_id": indexed_document["document_id"],
+            "collection_name": indexed_document["collection_name"],
+            "total_pages": extracted_text["total_pages"],
+            "total_chars": extracted_text["total_chars"],
+            "total_chunks": saved_chunks["total_chunks"],
+            "chunks_file": saved_chunks["chunks_file"],
+        }
+
+        registered_document = register_document(document_payload)
+
+        return {
+            "message": "Documento ingerido e indexado com sucesso.",
+            "document": registered_document,
+            "vectorstore_dir": indexed_document["vectorstore_dir"],
+        }
+
+    except ValueError as error:
+        logger.warning("Falha de validacao ao ingerir documento: %s", error)
+        raise HTTPException(status_code=400, detail=str(error))
+    except Exception as error:
+        logger.exception("Erro inesperado ao ingerir documento")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro inesperado ao ingerir documento: {error}",
+        )
 
 
 @router.post("/upload")

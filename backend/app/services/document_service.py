@@ -1,9 +1,14 @@
+import logging
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import UploadFile
 from pypdf import PdfReader
+from pypdf.errors import PdfReadError
+
 from app.services.text_cleaning_service import clean_extracted_text
+
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIR = Path("app/storage/uploads")
 
@@ -38,12 +43,32 @@ def extract_text_from_pdf(file_path: str) -> dict:
     if not path.exists():
         raise ValueError("Arquivo não encontrado.")
 
-    reader = PdfReader(str(path))
+    try:
+        reader = PdfReader(str(path))
+    except PdfReadError as error:
+        logger.exception("Erro do pypdf ao abrir PDF: %s", path)
+        raise ValueError(f"Nao foi possivel ler o PDF: {error}") from error
+    except Exception as error:
+        logger.exception("Erro inesperado ao abrir PDF: %s", path)
+        raise ValueError(f"Falha ao abrir o PDF: {error}") from error
 
     pages = []
 
-    for index, page in enumerate(reader.pages, start=1):
-        raw_text = page.extract_text() or ""
+    try:
+        pdf_pages = reader.pages
+    except Exception as error:
+        logger.exception("Erro ao ler paginas do PDF: %s", path)
+        raise ValueError(f"Falha ao ler as paginas do PDF: {error}") from error
+
+    for index, page in enumerate(pdf_pages, start=1):
+        try:
+            raw_text = page.extract_text() or ""
+        except Exception as error:
+            logger.exception("Erro ao extrair texto da pagina %s do PDF: %s", index, path)
+            raise ValueError(
+                f"Falha ao extrair texto da pagina {index}: {error}"
+            ) from error
+
         text = clean_extracted_text(raw_text)
 
         pages.append(

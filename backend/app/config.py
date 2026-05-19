@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings
 
@@ -11,7 +12,7 @@ class Settings(BaseSettings):
     max_relevance_score: float = 1.2
 
     class Config:
-        env_file = ".env"
+        env_file = Path(__file__).resolve().parents[1] / ".env"
         extra = "ignore"
 
 

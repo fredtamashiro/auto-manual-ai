@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from typing import Any
 from app.config import get_settings
@@ -46,13 +45,22 @@ def create_documents_from_chunks(chunks_payload: dict[str, Any]) -> list[Documen
     return documents
 
 
-def validate_openai_api_key() -> None:
-    api_key = os.getenv("OPENAI_API_KEY")
+def validate_openai_api_key() -> str:
+    try:
+        settings = get_settings()
+    except Exception as error:
+        raise ValueError(
+            "OPENAI_API_KEY nao configurada. Defina uma chave valida em backend/.env."
+        ) from error
+
+    api_key = settings.openai_api_key
 
     if not api_key or api_key == OPENAI_API_KEY_PLACEHOLDER:
         raise ValueError(
             "OPENAI_API_KEY nao configurada. Defina uma chave valida em backend/.env."
         )
+
+    return api_key
 
 
 def index_chunks_in_vectorstore(chunks_file: str) -> dict[str, Any]:
@@ -62,7 +70,7 @@ def index_chunks_in_vectorstore(chunks_file: str) -> dict[str, Any]:
     if not documents:
         raise ValueError("Nenhum documento encontrado para indexacao.")
 
-    validate_openai_api_key()
+    api_key = validate_openai_api_key()
 
     VECTORSTORE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -70,6 +78,7 @@ def index_chunks_in_vectorstore(chunks_file: str) -> dict[str, Any]:
 
     embeddings = OpenAIEmbeddings(
         model=settings.openai_embedding_model,
+        openai_api_key=api_key,
     )
 
     collection_name = f"manual_{chunks_payload['document_id'].replace('-', '_')}"
@@ -105,10 +114,12 @@ def search_similar_chunks(
     if k <= 0:
         raise ValueError("O parâmetro k deve ser maior que zero.")
 
+    api_key = validate_openai_api_key()
     settings = get_settings()
 
     embeddings = OpenAIEmbeddings(
         model=settings.openai_embedding_model,
+        openai_api_key=api_key,
     )
     
     vectorstore = Chroma(
