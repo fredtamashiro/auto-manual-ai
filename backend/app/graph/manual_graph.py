@@ -26,12 +26,26 @@ def retrieve_context(state: ManualGraphState) -> ManualGraphState:
 
     context = build_context_from_chunks(chunks)
 
+    has_context = len(chunks) > 0 and bool(context.strip())
+
     return {
         **state,
         "chunks": chunks,
         "context": context,
+        "has_context": has_context,
     }
 
+def should_generate_answer(state: ManualGraphState) -> str:
+    if state["has_context"]:
+        return "generate_answer"
+
+    return "answer_not_found"
+
+def answer_not_found(state: ManualGraphState) -> ManualGraphState:
+    return {
+        **state,
+        "answer": "Não encontrei informações suficientes no manual para responder essa pergunta.",
+    }
 
 def generate_answer(state: ManualGraphState) -> ManualGraphState:
     prompt = f"""
@@ -85,22 +99,30 @@ def format_sources(state: ManualGraphState) -> ManualGraphState:
         "sources": sources,
     }
 
-
 def create_manual_graph():
     graph = StateGraph(ManualGraphState)
 
     graph.add_node("retrieve_context", retrieve_context)
     graph.add_node("generate_answer", generate_answer)
+    graph.add_node("answer_not_found", answer_not_found)
     graph.add_node("format_sources", format_sources)
 
     graph.set_entry_point("retrieve_context")
 
-    graph.add_edge("retrieve_context", "generate_answer")
+    graph.add_conditional_edges(
+        "retrieve_context",
+        should_generate_answer,
+        {
+            "generate_answer": "generate_answer",
+            "answer_not_found": "answer_not_found",
+        },
+    )
+
     graph.add_edge("generate_answer", "format_sources")
+    graph.add_edge("answer_not_found", "format_sources")
     graph.add_edge("format_sources", END)
 
     return graph.compile()
-
 
 def answer_question_with_manual_graph(
     collection_name: str,
@@ -121,6 +143,7 @@ def answer_question_with_manual_graph(
             "context": "",
             "answer": "",
             "sources": [],
+            "has_context": False,
         }
     )
 
@@ -129,3 +152,13 @@ def answer_question_with_manual_graph(
         "answer": result["answer"],
         "sources": result["sources"],
     }
+
+class ManualGraphState(TypedDict):
+    collection_name: str
+    question: str
+    k: int
+    chunks: list[dict[str, Any]]
+    context: str
+    answer: str
+    sources: list[dict[str, Any]]
+    has_context: bool
