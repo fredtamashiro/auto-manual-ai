@@ -11,3 +11,17 @@ services:
       - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: auto-manual-ai-frontend
+    ports:
+      - "2000:2000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend

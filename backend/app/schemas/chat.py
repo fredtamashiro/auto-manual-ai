@@ -4,10 +4,10 @@ from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
-    collection_name: str = Field(
+    document_id: str = Field(
         ...,
-        description="Nome da coleção no Chroma relacionada ao manual indexado.",
-        examples=["manual_a8f09cc3_7baa_4575_be64_fd6fa59a7b38"],
+        description="ID do documento/manual ingerido.",
+        examples=["d759fa9d-c412-4ed2-be68-0448b5472102"],
     )
 
     question: str = Field(

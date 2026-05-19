@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.chat import ChatRequest, ChatResponse
 from app.graph.manual_graph import answer_question_with_manual_graph
+from app.schemas.chat import ChatRequest, ChatResponse
+from app.services.document_registry_service import find_registered_document_by_id
 
 router = APIRouter(
     prefix="/chat",
@@ -12,8 +13,16 @@ router = APIRouter(
 @router.post("/ask", response_model=ChatResponse)
 def ask_question(payload: ChatRequest):
     try:
+        document = find_registered_document_by_id(payload.document_id)
+
+        if document is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Documento não encontrado.",
+            )
+
         result = answer_question_with_manual_graph(
-            collection_name=payload.collection_name,
+            collection_name=document["collection_name"],
             question=payload.question,
             k=payload.k,
         )
