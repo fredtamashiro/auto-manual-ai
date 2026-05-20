@@ -165,3 +165,7 @@ Retorna a resposta gerada pelo modelo e as fontes usadas.
 - O chat RAG usa o modelo `gpt-4o-mini`.
 - O armazenamento local fica em `backend/app/storage`.
 - A API depende de uma chave OpenAI valida em `backend/.env`.
+
+### Chat com resposta e fontes
+
+![Chat com resposta e fontes](docs/screenshots/chat-answer.png)
