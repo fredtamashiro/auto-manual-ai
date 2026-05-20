@@ -2,6 +2,17 @@ const API_URL =
   process.env.INTERNAL_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   "http://localhost:8000";
+const APP_API_KEY = process.env.NEXT_PUBLIC_APP_API_KEY;
+
+function getAuthHeaders(): Record<string, string> {
+  if (!APP_API_KEY) {
+    return {};
+  }
+
+  return {
+    "X-API-Key": APP_API_KEY,
+  };
+}
 
 export type DocumentItem = {
   document_id: string;
@@ -54,6 +65,7 @@ export async function askQuestion(params: {
   const response = await fetch(`${API_URL}/chat/ask`, {
     method: "POST",
     headers: {
+      ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -82,6 +94,7 @@ export async function uploadDocument(file: File): Promise<IngestDocumentResponse
 
   const response = await fetch(`${API_URL}/documents/ingest`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: formData,
   });
 

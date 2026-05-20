@@ -14,6 +14,8 @@ env/
 .env
 .env.*
 backend/.env
+!.env.example
+!backend/.env.example
 
 # FastAPI / local runtime
 *.log
@@ -28,6 +30,10 @@ backend/app/storage/chunks/*
 
 # Documents registry
 backend/app/storage/documents_registry.json
+
+# Vector store
+backend/app/storage/vectorstore/*
+!backend/app/storage/vectorstore/.gitkeep
 
 # Test and tooling caches
 .pytest_cache/

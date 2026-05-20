@@ -1,7 +1,9 @@
 import logging
+from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
+from app.api.dependencies import require_api_key
 from app.services.chunk_service import save_chunks_to_json, split_text_into_chunks
 from app.services.document_service import extract_text_from_pdf, save_uploaded_file
 from app.services.vector_store_service import (
@@ -15,11 +17,25 @@ from app.services.document_registry_service import (
 )
 
 logger = logging.getLogger(__name__)
+UPLOADS_DIR = Path("app/storage/uploads").resolve()
+CHUNKS_DIR = Path("app/storage/chunks").resolve()
 
 router = APIRouter(
     prefix="/documents",
     tags=["Documents"],
 )
+
+
+def ensure_path_inside_directory(path_value: str, base_dir: Path, label: str) -> str:
+    path = Path(path_value).resolve()
+
+    try:
+        path.relative_to(base_dir)
+    except ValueError as error:
+        raise ValueError(f"{label} deve estar dentro de {base_dir}.") from error
+
+    return str(path)
+
 
 @router.get("")
 def list_documents():
@@ -35,6 +51,7 @@ def ingest_document(
     file: UploadFile = File(...),
     chunk_size: int = 1000,
     chunk_overlap: int = 200,
+    _auth: None = Depends(require_api_key),
 ):
     try:
         saved_file = save_uploaded_file(file)
@@ -88,7 +105,10 @@ def ingest_document(
 
 
 @router.post("/upload")
-def upload_document(file: UploadFile = File(...)):
+def upload_document(
+    file: UploadFile = File(...),
+    _auth: None = Depends(require_api_key),
+):
     try:
         saved_file = save_uploaded_file(file)
 
@@ -102,9 +122,17 @@ def upload_document(file: UploadFile = File(...)):
 
 
 @router.post("/extract-text")
-def extract_document_text(file_path: str):
+def extract_document_text(
+    file_path: str,
+    _auth: None = Depends(require_api_key),
+):
     try:
-        result = extract_text_from_pdf(file_path)
+        safe_file_path = ensure_path_inside_directory(
+            path_value=file_path,
+            base_dir=UPLOADS_DIR,
+            label="file_path",
+        )
+        result = extract_text_from_pdf(safe_file_path)
 
         preview_pages = []
 
@@ -129,9 +157,19 @@ def extract_document_text(file_path: str):
         raise HTTPException(status_code=400, detail=str(error))
     
 @router.post("/chunk")
-def chunk_document(file_path: str, chunk_size: int = 1000, chunk_overlap: int = 200):
+def chunk_document(
+    file_path: str,
+    chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+    _auth: None = Depends(require_api_key),
+):
     try:
-        extracted_text = extract_text_from_pdf(file_path)
+        safe_file_path = ensure_path_inside_directory(
+            path_value=file_path,
+            base_dir=UPLOADS_DIR,
+            label="file_path",
+        )
+        extracted_text = extract_text_from_pdf(safe_file_path)
 
         chunks = split_text_into_chunks(
             pages=extracted_text["pages"],
@@ -167,9 +205,19 @@ def chunk_document(file_path: str, chunk_size: int = 1000, chunk_overlap: int = 
 
 
 @router.post("/process")
-def process_document(file_path: str, chunk_size: int = 1000, chunk_overlap: int = 200):
+def process_document(
+    file_path: str,
+    chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+    _auth: None = Depends(require_api_key),
+):
     try:
-        extracted_text = extract_text_from_pdf(file_path)
+        safe_file_path = ensure_path_inside_directory(
+            path_value=file_path,
+            base_dir=UPLOADS_DIR,
+            label="file_path",
+        )
+        extracted_text = extract_text_from_pdf(safe_file_path)
 
         chunks = split_text_into_chunks(
             pages=extracted_text["pages"],
@@ -198,9 +246,17 @@ def process_document(file_path: str, chunk_size: int = 1000, chunk_overlap: int 
         raise HTTPException(status_code=400, detail=str(error))
 
 @router.post("/index")
-def index_document_chunks(chunks_file: str):
+def index_document_chunks(
+    chunks_file: str,
+    _auth: None = Depends(require_api_key),
+):
     try:
-        result = index_chunks_in_vectorstore(chunks_file)
+        safe_chunks_file = ensure_path_inside_directory(
+            path_value=chunks_file,
+            base_dir=CHUNKS_DIR,
+            label="chunks_file",
+        )
+        result = index_chunks_in_vectorstore(safe_chunks_file)
 
         return {
             "message": "Chunks indexados com sucesso no vector store.",
@@ -214,7 +270,12 @@ def index_document_chunks(chunks_file: str):
         raise HTTPException(status_code=400, detail=str(error))
 
 @router.post("/search")
-def search_document_chunks(collection_name: str, query: str, k: int = 4):
+def search_document_chunks(
+    collection_name: str,
+    query: str,
+    k: int = 4,
+    _auth: None = Depends(require_api_key),
+):
     try:
         results = search_similar_chunks(
             collection_name=collection_name,

@@ -1,29 +1,48 @@
 import json
 from datetime import datetime, timezone
+from json import JSONDecodeError
 from pathlib import Path
+from threading import Lock
 from typing import Any
+from uuid import uuid4
 
 REGISTRY_FILE = Path("app/storage/documents_registry.json")
+_REGISTRY_LOCK = Lock()
 
 
 def load_documents_registry() -> list[dict[str, Any]]:
     if not REGISTRY_FILE.exists():
         return []
 
-    with REGISTRY_FILE.open("r", encoding="utf-8") as file:
-        return json.load(file)
+    try:
+        with REGISTRY_FILE.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+    except JSONDecodeError as error:
+        raise ValueError("Registry de documentos esta corrompido.") from error
+
+    if not isinstance(data, list):
+        raise ValueError("Registry de documentos deve conter uma lista.")
+
+    return data
+
+
+def _write_documents_registry(documents: list[dict[str, Any]]) -> None:
+    REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_file = REGISTRY_FILE.with_name(f"{REGISTRY_FILE.name}.{uuid4()}.tmp")
+
+    with temp_file.open("w", encoding="utf-8") as file:
+        json.dump(documents, file, ensure_ascii=False, indent=2)
+
+    temp_file.replace(REGISTRY_FILE)
 
 
 def save_documents_registry(documents: list[dict[str, Any]]) -> None:
-    REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-    with REGISTRY_FILE.open("w", encoding="utf-8") as file:
-        json.dump(documents, file, ensure_ascii=False, indent=2)
+    with _REGISTRY_LOCK:
+        _write_documents_registry(documents)
 
 
 def register_document(document_data: dict[str, Any]) -> dict[str, Any]:
-    documents = load_documents_registry()
-
     registered_document = {
         "document_id": document_data["document_id"],
         "collection_name": document_data["collection_name"],
@@ -37,9 +56,11 @@ def register_document(document_data: dict[str, Any]) -> dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    documents.append(registered_document)
+    with _REGISTRY_LOCK:
+        documents = load_documents_registry()
+        documents.append(registered_document)
 
-    save_documents_registry(documents)
+        _write_documents_registry(documents)
 
     return registered_document
 
