@@ -18,7 +18,7 @@
         "is_valid": true,
         "quality_score": 0.8,
         "title": "Armazenamento de Dados do Veículo",
-        "summary": "Os dados do veículo são armazenados no equipamento do veículo e podem ser acessados via interface OBD, podendo ser lidos por concessionárias autorizadas ou terceiros, e transmitidos para engenheiros da BYD durante a manutenção.",
+        "summary": "Os dados do veículo são armazenados no equipamento e podem ser acessados via interface OBD por concessionárias ou terceiros, podendo ser transmitidos para engenheiros da BYD durante a manutenção.",
         "category": "Dados do Veículo",
         "keywords": [
           "armazenamento de dados",
@@ -30,9 +30,10 @@
           "Quem pode acessar os dados do veículo?"
         ],
         "warnings": [
-          "O acesso aos dados pode ser feito por terceiros, o que pode levantar preocupações sobre privacidade."
+          "Não há menção a chip, eSIM ou modem próprio."
         ]
-      }
+      },
+      "embedding_content": "Título: Armazenamento de Dados do Veículo\nCategoria: Dados do Veículo\nResumo: Os dados do veículo são armazenados no equipamento e podem ser acessados via interface OBD por concessionárias ou terceiros, podendo ser transmitidos para engenheiros da BYD durante a manutenção.\nPalavras-chave: armazenamento de dados, interface OBD, manutenção do veículo\nPerguntas possíveis: Como os dados do veículo são armazenados? | Quem pode acessar os dados do veículo?\nObservações: Não há menção a chip, eSIM ou modem próprio.\nConteúdo original: . z Os dados do veículo serão armazenados apenas no equipamento do veículo, mas podem ser lidos por meio da interface OBD (Sistema de Diagnóstico de Bordo) exigida por lei, por exemplo, pela Conces- sionária Autorizada BYD ou por terceiros. z Caso esse acesso ocorra durante a ma- nutenção do veículo, as informações também podem ser transmitidas para en- genheiros da BYD para garantia de quali- dade, relatórios de defeitos do produto ou verificação de reclamações de clientes."
     },
     {
       "chunk_index": 72,
@@ -44,8 +45,8 @@
         "is_valid": true,
         "quality_score": 0.8,
         "title": "Serviços de Suporte Remoto",
-        "summary": "O veículo oferece serviços de suporte remoto, incluindo diagnóstico e atualizações via sistema OTA, visando segurança e proteção, com transmissão de dados para o centro de dados da BYD.",
-        "category": "Segurança e Conectividade",
+        "summary": "O veículo oferece serviços de suporte remoto, incluindo diagnóstico e atualizações via sistema OTA, visando segurança e proteção, com transmissão de informações para o centro de dados da BYD.",
+        "category": "Serviços Conectados",
         "keywords": [
           "suporte remoto",
           "diagnóstico remoto",
@@ -54,12 +55,14 @@
         ],
         "possible_questions": [
           "Quais são os serviços de suporte remoto disponíveis?",
-          "Como funciona o diagnóstico remoto do veículo?"
+          "Como funcionam as atualizações OTA no veículo?",
+          "Que informações são transmitidas para o centro de dados da BYD?"
         ],
         "warnings": [
-          "Os serviços dependem da aprovação do proprietário e podem variar conforme o país."
+          "Não há menção a chip, eSIM ou modem próprio para conectividade."
         ]
-      }
+      },
+      "embedding_content": "Título: Serviços de Suporte Remoto\nCategoria: Serviços Conectados\nResumo: O veículo oferece serviços de suporte remoto, incluindo diagnóstico e atualizações via sistema OTA, visando segurança e proteção, com transmissão de informações para o centro de dados da BYD.\nPalavras-chave: suporte remoto, diagnóstico remoto, atualizações OTA, segurança veicular\nPerguntas possíveis: Quais são os serviços de suporte remoto disponíveis? | Como funcionam as atualizações OTA no veículo? | Que informações são transmitidas para o centro de dados da BYD?\nObservações: Não há menção a chip, eSIM ou modem próprio para conectividade.\nConteúdo original: 28 01 SEGURANÇA Dados relacionados a serviços remotos – serviços de suporte remoto z O veículo possui serviços de suporte remoto. Isso inclui diagnóstico remoto e atualizações e upgrades via sistema OTA-Over-the-Air (Transmissão sem fios) para fins de segurança e proteção (sujeito à aprovação do proprietário). z Esses serviços atendem aos seguintes pro- pósitos: − Prestação de serviços (suporte/diag- nóstico remoto). − Desenvolvimento de produtos e segu- rança/proteção pública. z Dependendo do país e da configuração, várias informações do veículo podem ser transmitidas para o centro de dados da BYD no mercado correspondente para os fins mencionados, incluindo informações de: − Localização; − Status do veículo (como consumo de energia, velocidade, posição da mar - cha, modo de potência, status do ESC, status do sistema de direção, status da bateria e do trem de força); − Desempenho geral do veículo"
     },
     {
       "chunk_index": 73,
@@ -71,22 +74,25 @@
         "is_valid": true,
         "quality_score": 0.8,
         "title": "Central Multimídia e Integração de Dispositivos",
-        "summary": "O chunk descreve a funcionalidade da central multimídia do veículo, incluindo a adição de dados para reprodução de mídia, navegação e serviços online, além da possibilidade de conectar dispositivos móveis.",
-        "category": "Tecnologia do Veículo",
+        "summary": "O chunk descreve a funcionalidade da central multimídia do veículo, incluindo a adição de dados para reprodução de vídeo, navegação e serviços online, além da possibilidade de conectar dispositivos móveis.",
+        "category": "Conectividade e Multimídia",
         "keywords": [
           "central multimídia",
-          "integração de dispositivos",
           "serviços online",
-          "navegação"
+          "integração de dispositivos",
+          "navegação",
+          "dados de mídia"
         ],
         "possible_questions": [
           "Como posso adicionar dados à central multimídia?",
-          "É seguro usar serviços online no veículo?"
+          "Quais serviços online estão disponíveis no veículo?",
+          "É possível conectar meu celular à central multimídia?"
         ],
         "warnings": [
-          "A BYD não controla os dados transferidos para terceiros, recomenda-se verificar a política de privacidade dos serviços utilizados."
+          "A BYD não controla os dados transferidos para terceiros; recomenda-se avaliar a política de privacidade desses serviços."
         ]
-      }
+      },
+      "embedding_content": "Título: Central Multimídia e Integração de Dispositivos\nCategoria: Conectividade e Multimídia\nResumo: O chunk descreve a funcionalidade da central multimídia do veículo, incluindo a adição de dados para reprodução de vídeo, navegação e serviços online, além da possibilidade de conectar dispositivos móveis.\nPalavras-chave: central multimídia, serviços online, integração de dispositivos, navegação, dados de mídia\nPerguntas possíveis: Como posso adicionar dados à central multimídia? | Quais serviços online estão disponíveis no veículo? | É possível conectar meu celular à central multimídia?\nObservações: A BYD não controla os dados transferidos para terceiros; recomenda-se avaliar a política de privacidade desses serviços.\nConteúdo original: . Outros z Central multimídia: − Dependendo da configuração do veícu- lo, os usuários podem adicionar dados à central multimídia, como dados de mídia para reprodução de vídeo, dados de endereço para uso no sistema de na- vegação ou dados para uso em serviços online. − Dependendo da configuração do veícu- lo, também é possível inserir configura- ções individuais no veículo. − Os dados armazenados no veículo po - dem ser excluídos a qualquer momento. − A BYD não tem controle sobre os dados transferidos para terceiros (do uso de conteúdos de terceiros, em particular como parte de serviços online), assim, recomenda-se que o usuário avalie aten- tamente a política de privacidade desses terceiros antes de iniciar a utilização desses serviços no veículo. z Integração de dispositivos móveis: − Dependendo da configuração do veí- culo, dispositivos móveis podem ser conectados e controlados através da central multimídia do veículo"
     },
     {
       "chunk_index": 74,
@@ -99,21 +105,23 @@
         "quality_score": 0.8,
         "title": "Integração de Dispositivos Móveis",
         "summary": "O chunk descreve como dispositivos móveis podem ser conectados e controlados pela central multimídia do veículo, incluindo a transmissão de dados e acesso à internet para serviços da BYD.",
-        "category": "Conectividade e Integração",
+        "category": "Conectividade e Serviços Conectados",
         "keywords": [
-          "conexão de dispositivos",
+          "integração de dispositivos",
           "central multimídia",
-          "serviços conectados",
-          "acesso à internet"
+          "acesso à internet",
+          "serviços conectados"
         ],
         "possible_questions": [
-          "Como conectar meu celular à central multimídia?",
-          "Quais serviços da BYD podem ser acessados pela internet no veículo?"
+          "Como conectar meu dispositivo móvel à central multimídia?",
+          "Quais serviços online estão disponíveis no veículo?",
+          "Como acessar a internet no carro?"
         ],
         "warnings": [
-          "A conectividade depende das configurações do veículo e pode variar entre diferentes modelos."
+          "Não menciona chip, eSIM ou modem próprio, portanto, a conectividade pode depender de outros dispositivos."
         ]
-      }
+      },
+      "embedding_content": "Título: Integração de Dispositivos Móveis\nCategoria: Conectividade e Serviços Conectados\nResumo: O chunk descreve como dispositivos móveis podem ser conectados e controlados pela central multimídia do veículo, incluindo a transmissão de dados e acesso à internet para serviços da BYD.\nPalavras-chave: integração de dispositivos, central multimídia, acesso à internet, serviços conectados\nPerguntas possíveis: Como conectar meu dispositivo móvel à central multimídia? | Quais serviços online estão disponíveis no veículo? | Como acessar a internet no carro?\nObservações: Não menciona chip, eSIM ou modem próprio, portanto, a conectividade pode depender de outros dispositivos.\nConteúdo original: . z Integração de dispositivos móveis: − Dependendo da configuração do veí- culo, dispositivos móveis podem ser conectados e controlados através da central multimídia do veículo. − Pode ser necessário que a tela ou o áu- dio do dispositivo sejam exibidos/repro- duzidos por meio da central multimídia ou transmitidos para ele. − Dados adicionais, como posicionamen- to ou informações do veículo, podem ser transmitidos por meio de aplicativos para uso em determinados sistemas de navegação, comunicação ou outros serviços de terceiros. − O tipo específico de processamento de dados depende da função respectiva e é controlado pelo usuário ou por tercei- ros, como o provedor dos dispositivos ou serviços correspondentes. z Acesso à internet e serviços conectados: − Dependendo das configurações do veí- culo, a internet pode ser acessada para determinadas funções ou serviços da BYD por meio dos dispositivos de rede da central multimídia do veículo"
     },
     {
       "chunk_index": 75,
@@ -123,24 +131,25 @@
       "chunk_strategy": "recursive_character",
       "enrichment": {
         "is_valid": true,
-        "quality_score": 0.8,
-        "title": "Gravação de Imagens da Câmera",
-        "summary": "O veículo BYD possui câmeras e sensores que detectam objetos ao redor, transmitindo imagens para análise. Algumas imagens são processadas temporariamente, enquanto outras podem ser armazenadas, dependendo do equipamento.",
-        "category": "Tecnologia do Veículo",
+        "quality_score": 0.7,
+        "title": "Responsabilidade e Câmeras do Veículo",
+        "summary": "O texto aborda a responsabilidade da BYD sobre serviços de terceiros e descreve o funcionamento das câmeras e sensores do veículo, que são utilizados para detectar objetos e avaliar o trajeto.",
+        "category": "Responsabilidade e Tecnologia do Veículo",
         "keywords": [
-          "câmeras",
+          "serviços de terceiros",
+          "câmeras do veículo",
           "sensores",
-          "detecção de objetos",
-          "análise de imagens"
+          "detecção de objetos"
         ],
         "possible_questions": [
-          "Como funcionam as câmeras do veículo?",
-          "O que acontece com as imagens capturadas pelas câmeras?"
+          "Qual é a responsabilidade da BYD sobre serviços de terceiros?",
+          "Como funcionam as câmeras do veículo?"
         ],
         "warnings": [
-          "A BYD não se responsabiliza por serviços de terceiros relacionados ao uso de dados."
+          "Não há menção a chip, eSIM ou modem próprio para conectividade."
         ]
-      }
+      },
+      "embedding_content": "Título: Responsabilidade e Câmeras do Veículo\nCategoria: Responsabilidade e Tecnologia do Veículo\nResumo: O texto aborda a responsabilidade da BYD sobre serviços de terceiros e descreve o funcionamento das câmeras e sensores do veículo, que são utilizados para detectar objetos e avaliar o trajeto.\nPalavras-chave: serviços de terceiros, câmeras do veículo, sensores, detecção de objetos\nPerguntas possíveis: Qual é a responsabilidade da BYD sobre serviços de terceiros? | Como funcionam as câmeras do veículo?\nObservações: Não há menção a chip, eSIM ou modem próprio para conectividade.\nConteúdo original: . − A BYD não se responsabiliza por quais- quer serviços fornecidos por terceiros. − Nesses casos, obtenha informações sobre o uso de dados junto ao provedor do respectivo serviço online. z Gravação de imagens da câmera: − O veículo está equipado com várias câ- meras/sensores. − Isso ocorre porque algumas funcionali- dades do veículo requerem a detecção e avaliação do trajeto do veículo, o que é feito por câmeras que detectam obje- tos no entorno do veículo (por exemplo, obstáculos). − As imagens são transmitidas para o res- pectivo módulo de controle para análi- ses adicionais necessárias para operar os sistemas. − Algumas imagens são apenas processa- das de forma temporária (memória RAM), outras podem ser armazenadas, depen- dendo do equipamento do veículo. − Para obter detalhes sobre a câmera, consulte o item Sistema AVM (Monito - ramento de Visão ao Redor) P133."
     }
   ]
 }

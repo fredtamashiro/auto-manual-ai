@@ -10,6 +10,7 @@ from app.services.document_service import extract_text_from_pdf, save_uploaded_f
 from app.services.vector_store_service import (
     index_chunks_in_vectorstore,
     search_similar_chunks,
+    index_enriched_chunks_in_vectorstore,
 )
 
 from app.services.document_registry_service import (
@@ -326,6 +327,22 @@ def enrich_document_chunks(chunks_file: str, limit: int = 10, offset: int = 0):
             "preview": result["preview"],
             "offset": result["offset"],
             "limit": result["limit"],
+        }
+
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+@router.post("/index-enriched")
+def index_enriched_document_chunks(enriched_chunks_file: str):
+    try:
+        result = index_enriched_chunks_in_vectorstore(enriched_chunks_file)
+
+        return {
+            "message": "Chunks enriquecidos indexados com sucesso no vector store.",
+            "document_id": result["document_id"],
+            "collection_name": result["collection_name"],
+            "total_documents": result["total_documents"],
+            "vectorstore_dir": result["vectorstore_dir"],
         }
 
     except ValueError as error:

@@ -46,6 +46,9 @@ Regras:
 - warnings deve indicar ambiguidades, limitações ou riscos de interpretação.
 - Não invente recursos que não estejam no texto.
 - Se o texto mencionar conectividade, diferencie conexão com celular, WLAN, dados móveis, internet, serviços conectados, chip, eSIM ou modem próprio quando possível.
+- Quando o chunk mencionar serviços online, rede, WLAN, dados móveis, OTA, dispositivos móveis, central multimídia ou conexão, inclua keywords e possible_questions relacionadas a internet no veículo, internet embarcada, conectividade e serviços conectados.
+- Só mencione chip, eSIM ou modem próprio como fato se isso estiver claramente presente no texto.
+- Se o texto não confirmar chip/eSIM/modem próprio, coloque essa limitação em warnings.
 
 Chunk:
 Página: {chunk.get("page")}
@@ -73,10 +76,14 @@ Conteúdo:
             ],
         }
 
-    return {
+    enriched_chunk = {
         **chunk,
         "enrichment": enrichment,
     }
+
+    enriched_chunk["embedding_content"] = build_embedding_content(enriched_chunk)
+
+    return enriched_chunk
 
 
 def enrich_chunks_file(
@@ -133,3 +140,26 @@ def enrich_chunks_file(
         "limit": limit,
         "preview": enriched_chunks[:3],
     }
+
+def build_embedding_content(enriched_chunk: dict[str, Any]) -> str:
+    enrichment = enriched_chunk.get("enrichment", {})
+
+    title = enrichment.get("title", "")
+    summary = enrichment.get("summary", "")
+    category = enrichment.get("category", "")
+    keywords = enrichment.get("keywords", [])
+    possible_questions = enrichment.get("possible_questions", [])
+    warnings = enrichment.get("warnings", [])
+    original_content = enriched_chunk.get("content", "")
+
+    return "\n".join(
+        [
+            f"Título: {title}",
+            f"Categoria: {category}",
+            f"Resumo: {summary}",
+            f"Palavras-chave: {', '.join(keywords)}",
+            f"Perguntas possíveis: {' | '.join(possible_questions)}",
+            f"Observações: {' | '.join(warnings)}",
+            f"Conteúdo original: {original_content}",
+        ]
+    ).strip()

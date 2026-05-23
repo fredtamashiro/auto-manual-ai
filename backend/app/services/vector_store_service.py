@@ -137,12 +137,81 @@ def search_similar_chunks(
     similar_chunks = []
 
     for document, score in results:
+        content = document.metadata.get("original_content") or document.page_content
+
         similar_chunks.append(
             {
-                "content": document.page_content,
+                "content": content,
+                "retrieval_content": document.page_content,
                 "metadata": document.metadata,
                 "score": score,
             }
         )
 
     return similar_chunks
+
+def index_enriched_chunks_in_vectorstore(enriched_chunks_file: str) -> dict[str, Any]:
+    path = Path(enriched_chunks_file)
+
+    if not path.exists():
+        raise ValueError("Arquivo de chunks enriquecidos não encontrado.")
+
+    with path.open("r", encoding="utf-8") as file:
+        enriched_payload = json.load(file)
+
+    chunks = enriched_payload.get("chunks", [])
+
+    if not chunks:
+        raise ValueError("Nenhum chunk enriquecido encontrado para indexação.")
+
+    VECTORSTORE_DIR.mkdir(parents=True, exist_ok=True)
+
+    settings = get_settings()
+
+    embeddings = OpenAIEmbeddings(
+        model=settings.openai_embedding_model,
+    )
+
+    document_id = enriched_payload["document_id"]
+    collection_name = f"manual_enriched_{document_id.replace('-', '_')}"
+
+    documents = []
+
+    for chunk in chunks:
+        enrichment = chunk.get("enrichment", {})
+
+        documents.append(
+            Document(
+                page_content=chunk.get("embedding_content") or chunk["content"],
+                metadata={
+                    "document_id": document_id,
+                    "source_file_path": enriched_payload.get("source_file_path"),
+                    "chunk_index": chunk["chunk_index"],
+                    "page": chunk["page"],
+                    "char_count": chunk["char_count"],
+                    "chunk_strategy": chunk.get("chunk_strategy", "unknown"),
+                    "retrieval_content_type": "enriched",
+                    "original_content": chunk["content"],
+                    "title": enrichment.get("title", ""),
+                    "category": enrichment.get("category", ""),
+                    "summary": enrichment.get("summary", ""),
+                    "quality_score": enrichment.get("quality_score", 0),
+                    "is_valid": enrichment.get("is_valid", True),
+                },
+            )
+        )
+
+    vectorstore = Chroma(
+        collection_name=collection_name,
+        embedding_function=embeddings,
+        persist_directory=str(VECTORSTORE_DIR),
+    )
+
+    vectorstore.add_documents(documents)
+
+    return {
+        "document_id": document_id,
+        "collection_name": collection_name,
+        "total_documents": len(documents),
+        "vectorstore_dir": str(VECTORSTORE_DIR),
+    }
