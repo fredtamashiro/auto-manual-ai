@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from langchain_openai import ChatOpenAI
 
@@ -45,7 +46,8 @@ Regras:
 - possible_questions devem representar formas naturais de um usuário perguntar sobre esse conteúdo.
 - warnings deve indicar ambiguidades, limitações ou riscos de interpretação.
 - Não invente recursos que não estejam no texto.
-- Se o texto mencionar conectividade, diferencie conexão com celular, WLAN, dados móveis, internet, serviços conectados, chip, eSIM ou modem próprio quando possível.
+- Se o chunk for sobre conectividade, internet, serviços online, dados móveis, Wi-Fi, WLAN, central multimídia ou serviços conectados e não confirmar chip/eSIM/modem próprio, coloque essa limitação em warnings.
+- Não adicione warnings sobre chip/eSIM/modem em chunks que não sejam relacionados a conectividade.
 - Quando o chunk mencionar serviços online, rede, WLAN, dados móveis, OTA, dispositivos móveis, central multimídia ou conexão, inclua keywords e possible_questions relacionadas a internet no veículo, internet embarcada, conectividade e serviços conectados.
 - Só mencione chip, eSIM ou modem próprio como fato se isso estiver claramente presente no texto.
 - Se o texto não confirmar chip/eSIM/modem próprio, coloque essa limitação em warnings.
@@ -149,7 +151,6 @@ def build_embedding_content(enriched_chunk: dict[str, Any]) -> str:
     category = enrichment.get("category", "")
     keywords = enrichment.get("keywords", [])
     possible_questions = enrichment.get("possible_questions", [])
-    warnings = enrichment.get("warnings", [])
     original_content = enriched_chunk.get("content", "")
 
     return "\n".join(
@@ -159,7 +160,6 @@ def build_embedding_content(enriched_chunk: dict[str, Any]) -> str:
             f"Resumo: {summary}",
             f"Palavras-chave: {', '.join(keywords)}",
             f"Perguntas possíveis: {' | '.join(possible_questions)}",
-            f"Observações: {' | '.join(warnings)}",
             f"Conteúdo original: {original_content}",
         ]
     ).strip()
@@ -306,14 +306,16 @@ def enrich_chunks_file_in_batches(
     ENRICHED_CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
 
     document_id = chunks_payload["document_id"]
+    enrichment_run_id = str(uuid4())
 
     output_path = (
         ENRICHED_CHUNKS_DIR
-        / f"{document_id}_enriched_offset_{offset}_limit_{limit}.json"
+        / f"{document_id}_enriched_offset_{offset}_limit_{limit}_{enrichment_run_id}.json"
     )
 
     payload = {
         "document_id": document_id,
+        "enrichment_run_id": enrichment_run_id,
         "source_file_path": chunks_payload.get("source_file_path"),
         "original_chunks_file": chunks_file,
         "total_original_chunks": len(chunks),
@@ -330,6 +332,7 @@ def enrich_chunks_file_in_batches(
 
     return {
         "document_id": document_id,
+        "enrichment_run_id": enrichment_run_id,
         "enriched_chunks_file": str(output_path),
         "total_original_chunks": len(chunks),
         "total_enriched_chunks": len(enriched_chunks),

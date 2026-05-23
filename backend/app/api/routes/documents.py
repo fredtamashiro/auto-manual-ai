@@ -369,6 +369,7 @@ def enrich_document_chunks_batch(
         return {
             "message": "Chunks enriquecidos em lote com sucesso.",
             "document_id": result["document_id"],
+            "enrichment_run_id": result["enrichment_run_id"],
             "enriched_chunks_file": result["enriched_chunks_file"],
             "total_original_chunks": result["total_original_chunks"],
             "total_enriched_chunks": result["total_enriched_chunks"],

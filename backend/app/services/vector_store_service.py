@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -173,7 +174,59 @@ def index_enriched_chunks_in_vectorstore(enriched_chunks_file: str) -> dict[str,
     )
 
     document_id = enriched_payload["document_id"]
-    collection_name = f"manual_enriched_{document_id.replace('-', '_')}"
+    safe_document_id = document_id.replace("-", "_")
+    offset = enriched_payload.get("offset")
+    limit = enriched_payload.get("limit")
+    enrichment_run_id = enriched_payload.get("enrichment_run_id")
+    run_token = None
+    if enrichment_run_id:
+        run_token = enrichment_run_id.replace("-", "")[:8]
+
+    base_collection_name = f"manual_enriched_{safe_document_id}"
+    collection_name_prefix = "manual_enriched_"
+    document_hash = hashlib.sha256(document_id.encode("utf-8")).hexdigest()[:8]
+
+    if offset is not None and limit is not None:
+        collection_suffix = f"_offset_{offset}_limit_{limit}"
+        if run_token:
+            collection_suffix = f"{collection_suffix}_run_{run_token}"
+
+        max_document_id_length = (
+            63 - len(collection_name_prefix) - len(collection_suffix)
+        )
+
+        if max_document_id_length <= 0:
+            raise ValueError("Nome da collection experimental excede o limite do Chroma.")
+
+        if max_document_id_length <= len(document_hash):
+            short_document_id = document_hash[:max_document_id_length]
+        else:
+            prefix_length = max_document_id_length - len(document_hash) - 1
+            short_document_id = f"{safe_document_id[:prefix_length]}_{document_hash}"
+
+        collection_name = (
+            f"{collection_name_prefix}{short_document_id}{collection_suffix}"
+        )
+    elif run_token:
+        collection_suffix = f"_run_{run_token}"
+        max_document_id_length = (
+            63 - len(collection_name_prefix) - len(collection_suffix)
+        )
+
+        if max_document_id_length <= 0:
+            raise ValueError("Nome da collection experimental excede o limite do Chroma.")
+
+        if max_document_id_length <= len(document_hash):
+            short_document_id = document_hash[:max_document_id_length]
+        else:
+            prefix_length = max_document_id_length - len(document_hash) - 1
+            short_document_id = f"{safe_document_id[:prefix_length]}_{document_hash}"
+
+        collection_name = (
+            f"{collection_name_prefix}{short_document_id}{collection_suffix}"
+        )
+    else:
+        collection_name = base_collection_name
 
     documents = []
 
