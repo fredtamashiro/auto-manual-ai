@@ -117,6 +117,12 @@ export function DocumentChat({ documentId }: DocumentChatProps) {
                           <span>Score: {source.score.toFixed(4)}</span>
                         </div>
 
+                        {source.matched_query && (
+                          <p className="mb-2 text-xs text-blue-300">
+                            Query usada: {source.matched_query}
+                          </p>
+                        )}
+
                         <p className="text-xs leading-5 text-slate-400">
                           {source.preview}
                         </p>

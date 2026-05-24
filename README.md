@@ -56,7 +56,21 @@ docker-compose.yml
 
 ## Como executar
 
-Configure a variavel `OPENAI_API_KEY` em `backend/.env`.
+Configure as variaveis em `backend/.env`.
+
+Exemplo:
+
+```env
+OPENAI_API_KEY=sua_chave_aqui
+APP_API_KEY=
+
+OPENAI_CHAT_MODEL=gpt-5-mini
+OPENAI_CHAT_TEMPERATURE=1
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+MAX_RELEVANCE_SCORE=1.2
+```
+
+Se usar `gpt-5-mini`, mantenha `OPENAI_CHAT_TEMPERATURE=1`. Esse modelo aceita apenas a temperatura padrao.
 
 Suba a API com Docker Compose:
 
@@ -162,7 +176,9 @@ Retorna a resposta gerada pelo modelo e as fontes usadas.
 ## Observacoes
 
 - A indexacao usa o modelo `text-embedding-3-small`.
-- O chat RAG usa o modelo `gpt-4o-mini`.
+- O chat RAG usa o modelo configurado em `OPENAI_CHAT_MODEL`.
+- Para `gpt-5-mini`, configure `OPENAI_CHAT_TEMPERATURE=1`.
+- Modelos como `gpt-4o-mini` podem aceitar outros valores de temperatura, mas o valor recomendado neste projeto e `1` para manter compatibilidade com `gpt-5-mini`.
 - O armazenamento local fica em `backend/app/storage`.
 - A API depende de uma chave OpenAI valida em `backend/.env`.
 

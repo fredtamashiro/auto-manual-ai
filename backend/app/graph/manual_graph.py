@@ -200,6 +200,7 @@ def format_sources(state: ManualGraphState) -> ManualGraphState:
                 "page": metadata.get("page"),
                 "chunk_index": metadata.get("chunk_index"),
                 "score": chunk["score"],
+                "matched_query": chunk.get("matched_query"),
                 "preview": chunk["content"][:300],
             }
         )
