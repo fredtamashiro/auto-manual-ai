@@ -1,27 +1,30 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.api.dependencies import require_api_key
 from app.services.chunk_enrichment_service import (
+    enrich_all_chunks_file,
     enrich_chunks_file,
     enrich_chunks_file_in_batches,
 )
 from app.services.chunk_service import save_chunks_to_json, split_text_into_chunks
-from app.services.document_service import extract_text_from_pdf, save_uploaded_file
-from app.services.vector_store_service import (
-    index_chunks_in_vectorstore,
-    search_similar_chunks,
-    index_enriched_chunks_in_vectorstore,
-)
-
 from app.services.document_registry_service import (
     list_registered_documents,
     register_document,
+    update_registered_document,
+)
+from app.services.document_service import extract_text_from_pdf, save_uploaded_file
+from app.services.theme_service import find_theme_by_id
+from app.services.vector_store_service import (
+    index_chunks_in_vectorstore,
+    index_enriched_chunks_in_vectorstore,
+    search_similar_chunks,
 )
 
 logger = logging.getLogger(__name__)
+
 UPLOADS_DIR = Path("app/storage/uploads").resolve()
 CHUNKS_DIR = Path("app/storage/chunks").resolve()
 
@@ -51,14 +54,21 @@ def list_documents():
         "documents": documents,
     }
 
+
 @router.post("/ingest")
 def ingest_document(
     file: UploadFile = File(...),
-    chunk_size: int = 1000,
-    chunk_overlap: int = 200,
+    theme_id: str = Form("automotive_manual"),
+    chunk_size: int = Form(1000),
+    chunk_overlap: int = Form(200),
     _auth: None = Depends(require_api_key),
 ):
     try:
+        theme = find_theme_by_id(theme_id)
+
+        if theme is None:
+            raise ValueError("Tema informado não encontrado.")
+
         saved_file = save_uploaded_file(file)
 
         extracted_text = extract_text_from_pdf(saved_file["path"])
@@ -84,6 +94,8 @@ def ingest_document(
             "file_path": saved_file["path"],
             "document_id": indexed_document["document_id"],
             "collection_name": indexed_document["collection_name"],
+            "theme_id": theme["theme_id"],
+            "theme_name": theme["name"],
             "total_pages": extracted_text["total_pages"],
             "total_chars": extracted_text["total_chars"],
             "total_chunks": saved_chunks["total_chunks"],
@@ -137,6 +149,7 @@ def extract_document_text(
             base_dir=UPLOADS_DIR,
             label="file_path",
         )
+
         result = extract_text_from_pdf(safe_file_path)
 
         preview_pages = []
@@ -160,7 +173,8 @@ def extract_document_text(
 
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-    
+
+
 @router.post("/chunk")
 def chunk_document(
     file_path: str,
@@ -174,6 +188,7 @@ def chunk_document(
             base_dir=UPLOADS_DIR,
             label="file_path",
         )
+
         extracted_text = extract_text_from_pdf(safe_file_path)
 
         chunks = split_text_into_chunks(
@@ -222,6 +237,7 @@ def process_document(
             base_dir=UPLOADS_DIR,
             label="file_path",
         )
+
         extracted_text = extract_text_from_pdf(safe_file_path)
 
         chunks = split_text_into_chunks(
@@ -250,6 +266,7 @@ def process_document(
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+
 @router.post("/index")
 def index_document_chunks(
     chunks_file: str,
@@ -261,6 +278,7 @@ def index_document_chunks(
             base_dir=CHUNKS_DIR,
             label="chunks_file",
         )
+
         result = index_chunks_in_vectorstore(safe_chunks_file)
 
         return {
@@ -273,6 +291,7 @@ def index_document_chunks(
 
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
+
 
 @router.post("/search")
 def search_document_chunks(
@@ -312,13 +331,18 @@ def search_document_chunks(
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+
 @router.post("/enrich-chunks")
-def enrich_document_chunks(chunks_file: str, limit: int = 10, offset: int = 0):
+def enrich_document_chunks(
+    chunks_file: str,
+    limit: int = 10,
+    offset: int = 0,
+):
     try:
         result = enrich_chunks_file(
             chunks_file=chunks_file,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
 
         return {
@@ -335,10 +359,26 @@ def enrich_document_chunks(chunks_file: str, limit: int = 10, offset: int = 0):
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+
 @router.post("/index-enriched")
-def index_enriched_document_chunks(enriched_chunks_file: str):
+def index_enriched_document_chunks(
+    enriched_chunks_file: str,
+    register_as_active: bool = False,
+):
     try:
         result = index_enriched_chunks_in_vectorstore(enriched_chunks_file)
+
+        updated_document = None
+
+        if register_as_active:
+            updated_document = update_registered_document(
+                document_id=result["document_id"],
+                updates={
+                    "enriched_collection_name": result["collection_name"],
+                    "retrieval_mode": "enriched",
+                    "enriched_chunks_file": enriched_chunks_file,
+                },
+            )
 
         return {
             "message": "Chunks enriquecidos indexados com sucesso no vector store.",
@@ -346,10 +386,13 @@ def index_enriched_document_chunks(enriched_chunks_file: str):
             "collection_name": result["collection_name"],
             "total_documents": result["total_documents"],
             "vectorstore_dir": result["vectorstore_dir"],
+            "registered_as_active": register_as_active,
+            "document": updated_document,
         }
 
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
+
 
 @router.post("/enrich-chunks-batch")
 def enrich_document_chunks_batch(
@@ -375,6 +418,33 @@ def enrich_document_chunks_batch(
             "total_enriched_chunks": result["total_enriched_chunks"],
             "offset": result["offset"],
             "limit": result["limit"],
+            "batch_size": result["batch_size"],
+            "preview": result["preview"],
+        }
+
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+@router.post("/enrich-all-chunks")
+def enrich_all_document_chunks(
+    chunks_file: str,
+    batch_size: int = 10,
+):
+    try:
+        result = enrich_all_chunks_file(
+            chunks_file=chunks_file,
+            batch_size=batch_size,
+        )
+
+        return {
+            "message": "Todos os chunks foram enriquecidos com sucesso.",
+            "document_id": result["document_id"],
+            "enriched_chunks_file": result["enriched_chunks_file"],
+            "total_original_chunks": result["total_original_chunks"],
+            "total_enriched_chunks": result["total_enriched_chunks"],
+            "enrichment_mode": result["enrichment_mode"],
+            "enrichment_run_id": result["enrichment_run_id"],
             "batch_size": result["batch_size"],
             "preview": result["preview"],
         }

@@ -340,3 +340,60 @@ def enrich_chunks_file_in_batches(
         "batch_size": batch_size,
         "preview": enriched_chunks[:3],
     }
+
+def enrich_all_chunks_file(
+    chunks_file: str,
+    batch_size: int = 10,
+) -> dict[str, Any]:
+    if batch_size <= 0:
+        raise ValueError("batch_size deve ser maior que zero.")
+
+    chunks_payload = load_chunks_from_json(chunks_file)
+    chunks = chunks_payload.get("chunks", [])
+
+    if not chunks:
+        raise ValueError("Nenhum chunk encontrado para enriquecer.")
+
+    enrichment_run_id = str(uuid4())
+
+    enriched_chunks = []
+
+    for start in range(0, len(chunks), batch_size):
+        batch = chunks[start : start + batch_size]
+        enriched_batch = enrich_chunk_batch(batch)
+        enriched_chunks.extend(enriched_batch)
+
+    ENRICHED_CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
+
+    document_id = chunks_payload["document_id"]
+
+    output_path = (
+        ENRICHED_CHUNKS_DIR
+        / f"{document_id}_enriched_full_{enrichment_run_id}.json"
+    )
+
+    payload = {
+        "document_id": document_id,
+        "source_file_path": chunks_payload.get("source_file_path"),
+        "original_chunks_file": chunks_file,
+        "total_original_chunks": len(chunks),
+        "total_enriched_chunks": len(enriched_chunks),
+        "enrichment_mode": "full",
+        "enrichment_run_id": enrichment_run_id,
+        "batch_size": batch_size,
+        "chunks": enriched_chunks,
+    }
+
+    with output_path.open("w", encoding="utf-8") as file:
+        json.dump(payload, file, ensure_ascii=False, indent=2)
+
+    return {
+        "document_id": document_id,
+        "enriched_chunks_file": str(output_path),
+        "total_original_chunks": len(chunks),
+        "total_enriched_chunks": len(enriched_chunks),
+        "enrichment_mode": "full",
+        "enrichment_run_id": enrichment_run_id,
+        "batch_size": batch_size,
+        "preview": enriched_chunks[:3],
+    }

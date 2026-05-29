@@ -24,6 +24,8 @@ export type DocumentItem = {
   total_pages: number;
   total_chars: number;
   total_chunks: number;
+  theme_id?: string;
+  theme_name?: string;
   created_at: string;
 };
 
@@ -89,9 +91,13 @@ export type IngestDocumentResponse = {
   vectorstore_dir: string;
 };
 
-export async function uploadDocument(file: File): Promise<IngestDocumentResponse> {
+export async function uploadDocument(
+  file: File,
+  themeId = "automotive_manual",
+): Promise<IngestDocumentResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("theme_id", themeId);
 
   const response = await fetch(`${API_URL}/documents/ingest`, {
     method: "POST",

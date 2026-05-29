@@ -56,6 +56,12 @@ def register_document(document_data: dict[str, Any]) -> dict[str, Any]:
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
+    if "theme_id" in document_data:
+        registered_document["theme_id"] = document_data["theme_id"]
+
+    if "theme_name" in document_data:
+        registered_document["theme_name"] = document_data["theme_name"]
+
     with _REGISTRY_LOCK:
         documents = load_documents_registry()
         documents.append(registered_document)
@@ -77,3 +83,24 @@ def find_registered_document_by_id(document_id: str) -> dict[str, Any] | None:
             return document
 
     return None
+
+def update_registered_document(
+    document_id: str,
+    updates: dict[str, Any],
+) -> dict[str, Any]:
+    documents = load_documents_registry()
+
+    for index, document in enumerate(documents):
+        if document["document_id"] == document_id:
+            updated_document = {
+                **document,
+                **updates,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+            documents[index] = updated_document
+            save_documents_registry(documents)
+
+            return updated_document
+
+    raise ValueError("Documento não encontrado.")

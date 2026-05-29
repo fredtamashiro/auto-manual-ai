@@ -229,9 +229,17 @@ def index_enriched_chunks_in_vectorstore(enriched_chunks_file: str) -> dict[str,
         collection_name = base_collection_name
 
     documents = []
+    total_chunks = len(chunks)
+    total_skipped_chunks = 0
 
     for chunk in chunks:
         enrichment = chunk.get("enrichment", {})
+        is_valid = enrichment.get("is_valid", True)
+        quality_score = float(enrichment.get("quality_score", 0))
+
+        if is_valid is False or quality_score < 0.5:
+            total_skipped_chunks += 1
+            continue
 
         documents.append(
             Document(
@@ -265,6 +273,9 @@ def index_enriched_chunks_in_vectorstore(enriched_chunks_file: str) -> dict[str,
     return {
         "document_id": document_id,
         "collection_name": collection_name,
+        "total_chunks": total_chunks,
+        "total_indexed_documents": len(documents),
+        "total_skipped_chunks": total_skipped_chunks,
         "total_documents": len(documents),
         "vectorstore_dir": str(VECTORSTORE_DIR),
     }

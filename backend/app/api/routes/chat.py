@@ -25,11 +25,32 @@ def ask_question(
                 detail="Documento não encontrado.",
             )
 
+        original_collection_name = document["collection_name"]
+
+        primary_collection_name = original_collection_name
+
+        if document.get("retrieval_mode") == "enriched" and document.get(
+            "enriched_collection_name"
+        ):
+            primary_collection_name = document["enriched_collection_name"]
+
         result = answer_question_with_manual_graph(
-            collection_name=document["collection_name"],
+            collection_name=primary_collection_name,
             question=payload.question,
             k=payload.k,
         )
+
+        should_try_fallback = (
+            primary_collection_name != original_collection_name
+            and len(result.get("sources", [])) == 0
+        )
+
+        if should_try_fallback:
+            result = answer_question_with_manual_graph(
+                collection_name=original_collection_name,
+                question=payload.question,
+                k=payload.k,
+            )
 
         return ChatResponse(
             question=result["question"],
