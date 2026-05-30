@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI
 
 from app.config import get_settings
 from app.services.vector_store_service import load_chunks_from_json
+from app.services.theme_service import format_theme_rules, get_theme_or_default
 
 ENRICHED_CHUNKS_DIR = Path("app/storage/enriched_chunks")
 
@@ -168,7 +169,10 @@ def build_embedding_content(enriched_chunk: dict[str, Any]) -> str:
         ]
     ).strip()
 
-def enrich_chunk_batch(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def enrich_chunk_batch(
+    chunks: list[dict[str, Any]],
+    theme_id: str | None = None,
+) -> list[dict[str, Any]]:
     llm = create_chat_model()
 
     chunks_payload = []
@@ -181,6 +185,9 @@ def enrich_chunk_batch(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "content": chunk.get("content"),
             }
         )
+
+    theme = get_theme_or_default(theme_id)
+    theme_rules = format_theme_rules(theme, "enrichment_rules")
 
     prompt = f"""
 Você é um assistente especializado em análise de chunks para sistemas RAG com manuais automotivos.
@@ -212,9 +219,9 @@ Regras:
 - possible_questions devem representar formas naturais de um usuário perguntar sobre esse conteúdo.
 - warnings deve indicar ambiguidades, limitações ou riscos de interpretação.
 - Não invente recursos que não estejam no texto.
-- Quando o chunk mencionar serviços online, rede, WLAN, dados móveis, OTA, dispositivos móveis, central multimídia ou conexão, inclua keywords e possible_questions relacionadas a internet no veículo, internet embarcada, conectividade e serviços conectados.
-- Só mencione chip, eSIM ou modem próprio como fato se isso estiver claramente presente no texto.
-- Se o texto não confirmar chip/eSIM/modem próprio, coloque essa limitação em warnings.
+
+Regras específicas do tema "{theme["name"]}":
+{theme_rules}
 
 Chunks:
 {json.dumps(chunks_payload, ensure_ascii=False)}
@@ -274,6 +281,7 @@ def enrich_chunks_file_in_batches(
     limit: int = 20,
     offset: int = 0,
     batch_size: int = 5,
+    theme_id: str | None = None,
 ) -> dict[str, Any]:
     if limit <= 0:
         raise ValueError("limit deve ser maior que zero.")
@@ -286,6 +294,7 @@ def enrich_chunks_file_in_batches(
 
     chunks_payload = load_chunks_from_json(chunks_file)
     chunks = chunks_payload.get("chunks", [])
+    theme = get_theme_or_default(theme_id)
 
     if not chunks:
         raise ValueError("Nenhum chunk encontrado para enriquecer.")
@@ -299,7 +308,7 @@ def enrich_chunks_file_in_batches(
 
     for start in range(0, len(selected_chunks), batch_size):
         batch = selected_chunks[start : start + batch_size]
-        enriched_batch = enrich_chunk_batch(batch)
+        enriched_batch = enrich_chunk_batch(batch, theme_id=theme_id)
         enriched_chunks.extend(enriched_batch)
 
     ENRICHED_CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
@@ -324,6 +333,8 @@ def enrich_chunks_file_in_batches(
         "limit": limit,
         "batch_size": batch_size,
         "chunks": enriched_chunks,
+        "theme_id": theme["theme_id"],
+        "theme_name": theme["name"],
     }
 
     with output_path.open("w", encoding="utf-8") as file:
@@ -344,12 +355,14 @@ def enrich_chunks_file_in_batches(
 def enrich_all_chunks_file(
     chunks_file: str,
     batch_size: int = 10,
+    theme_id: str | None = None,
 ) -> dict[str, Any]:
     if batch_size <= 0:
         raise ValueError("batch_size deve ser maior que zero.")
 
     chunks_payload = load_chunks_from_json(chunks_file)
     chunks = chunks_payload.get("chunks", [])
+    theme = get_theme_or_default(theme_id)
 
     if not chunks:
         raise ValueError("Nenhum chunk encontrado para enriquecer.")
@@ -360,7 +373,7 @@ def enrich_all_chunks_file(
 
     for start in range(0, len(chunks), batch_size):
         batch = chunks[start : start + batch_size]
-        enriched_batch = enrich_chunk_batch(batch)
+        enriched_batch = enrich_chunk_batch(batch, theme_id=theme["theme_id"])
         enriched_chunks.extend(enriched_batch)
 
     ENRICHED_CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
@@ -382,6 +395,8 @@ def enrich_all_chunks_file(
         "enrichment_run_id": enrichment_run_id,
         "batch_size": batch_size,
         "chunks": enriched_chunks,
+        "theme_id": theme["theme_id"],
+        "theme_name": theme["name"],
     }
 
     with output_path.open("w", encoding="utf-8") as file:
@@ -396,4 +411,6 @@ def enrich_all_chunks_file(
         "enrichment_run_id": enrichment_run_id,
         "batch_size": batch_size,
         "preview": enriched_chunks[:3],
+        "theme_id": theme["theme_id"],
+        "theme_name": theme["name"],
     }

@@ -400,6 +400,7 @@ def enrich_document_chunks_batch(
     limit: int = 20,
     offset: int = 0,
     batch_size: int = 5,
+    theme_id: str = "generic_pdf",
 ):
     try:
         result = enrich_chunks_file_in_batches(
@@ -407,6 +408,7 @@ def enrich_document_chunks_batch(
             limit=limit,
             offset=offset,
             batch_size=batch_size,
+            theme_id=theme_id,
         )
 
         return {
@@ -430,11 +432,13 @@ def enrich_document_chunks_batch(
 def enrich_all_document_chunks(
     chunks_file: str,
     batch_size: int = 10,
+    theme_id: str = "generic_pdf",
 ):
     try:
         result = enrich_all_chunks_file(
             chunks_file=chunks_file,
             batch_size=batch_size,
+            theme_id=theme_id,
         )
 
         return {
@@ -447,6 +451,8 @@ def enrich_all_document_chunks(
             "enrichment_run_id": result["enrichment_run_id"],
             "batch_size": result["batch_size"],
             "preview": result["preview"],
+            "theme_id": result["theme_id"],
+            "theme_name": result["theme_name"],
         }
 
     except ValueError as error:
