@@ -370,10 +370,9 @@ def enrich_all_chunks_file(
         raise ValueError("Nenhum chunk encontrado para enriquecer.")
 
     enrichment_run_id = str(uuid4())
-    document_id = chunks_payload["document_id"]
-
     ENRICHED_CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
 
+    document_id = chunks_payload["document_id"]
     output_path = (
         ENRICHED_CHUNKS_DIR
         / f"{document_id}_enriched_full_{enrichment_run_id}.json"
@@ -424,7 +423,7 @@ def enrich_all_chunks_file(
         "enrichment_mode": "full",
         "enrichment_run_id": enrichment_run_id,
         "batch_size": batch_size,
-        "preview": enriched_chunks[:3],
         "theme_id": theme["theme_id"],
         "theme_name": theme["name"],
+        "preview": enriched_chunks[:3],
     }
