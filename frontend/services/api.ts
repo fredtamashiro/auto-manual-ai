@@ -18,15 +18,23 @@ export type DocumentItem = {
   document_id: string;
   collection_name: string;
   original_filename: string;
-  stored_filename: string;
-  file_path: string;
-  chunks_file: string;
+  stored_filename?: string;
+  file_path?: string;
+  chunks_file?: string;
+  enriched_chunks_file?: string;
+  enriched_collection_name?: string;
+  retrieval_mode?: string;
   total_pages: number;
   total_chars: number;
   total_chunks: number;
   theme_id?: string;
   theme_name?: string;
-  created_at: string;
+  created_at?: string;
+  document_summary?: string;
+  document_type?: string;
+  main_topics?: string[];
+  suggested_questions?: string[];
+  summary_limitations?: string[];
 };
 
 export type DocumentsResponse = {
@@ -109,33 +117,6 @@ export async function askQuestion(params: {
 
   if (!response.ok) {
     throw new Error("Erro ao enviar pergunta.");
-  }
-
-  return response.json();
-}
-
-export type IngestDocumentResponse = {
-  message: string;
-  document: DocumentItem;
-  vectorstore_dir: string;
-};
-
-export async function uploadDocument(
-  file: File,
-  themeId = "automotive_manual",
-): Promise<IngestDocumentResponse> {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("theme_id", themeId);
-
-  const response = await fetch(`${API_URL}/documents/ingest`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error("Erro ao enviar documento.");
   }
 
   return response.json();

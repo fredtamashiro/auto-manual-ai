@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
@@ -188,7 +188,7 @@ def run_smart_ingest_job(
         theme = find_theme_by_id(theme_id)
 
         if theme is None:
-            raise ValueError("Tema informado não encontrado.")
+            raise ValueError("Tema informado nÃ£o encontrado.")
 
         document_payload = {
             "original_filename": saved_file["original_filename"],
@@ -222,7 +222,7 @@ def run_smart_ingest_job(
             {
                 "status": STATUS_COMPLETED,
                 "progress": 100,
-                "current_step": "Processamento concluído",
+                "current_step": "Processamento concluÃ­do",
                 "result": {
                     "document": registered_document,
                     "vectorstore_dir": indexed_document["vectorstore_dir"],
@@ -315,129 +315,6 @@ def delete_document(
             status_code=500,
             detail=f"Erro inesperado ao apagar documento: {error}",
         )
-
-
-@router.post("/ingest")
-def ingest_document(
-    file: UploadFile = File(...),
-    theme_id: str = Form("automotive_manual"),
-    chunk_size: int = Form(1000),
-    chunk_overlap: int = Form(200),
-    _auth: None = Depends(require_api_key),
-):
-    """Faz upload, extrai texto, cria chunks, indexa e registra o documento."""
-    try:
-        theme = find_theme_by_id(theme_id)
-
-        if theme is None:
-            raise ValueError("Tema informado não encontrado.")
-
-        saved_file = save_uploaded_file(file)
-
-        extracted_text = extract_text_from_pdf(saved_file["path"])
-
-        chunks = split_text_into_chunks(
-            pages=extracted_text["pages"],
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-
-        saved_chunks = save_chunks_to_json(
-            chunks=chunks,
-            source_file_path=extracted_text["file_path"],
-        )
-
-        indexed_document = index_chunks_in_vectorstore(
-            chunks_file=saved_chunks["chunks_file"],
-        )
-
-        document_payload = {
-            "original_filename": saved_file["original_filename"],
-            "stored_filename": saved_file["stored_filename"],
-            "file_path": saved_file["path"],
-            "document_id": indexed_document["document_id"],
-            "collection_name": indexed_document["collection_name"],
-            "theme_id": theme["theme_id"],
-            "theme_name": theme["name"],
-            "total_pages": extracted_text["total_pages"],
-            "total_chars": extracted_text["total_chars"],
-            "total_chunks": saved_chunks["total_chunks"],
-            "chunks_file": saved_chunks["chunks_file"],
-        }
-
-        registered_document = register_document(document_payload)
-
-        return {
-            "message": "Documento ingerido e indexado com sucesso.",
-            "document": registered_document,
-            "vectorstore_dir": indexed_document["vectorstore_dir"],
-        }
-
-    except ValueError as error:
-        logger.warning("Falha de validacao ao ingerir documento: %s", error)
-        raise HTTPException(status_code=400, detail=str(error))
-    except Exception as error:
-        logger.exception("Erro inesperado ao ingerir documento")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro inesperado ao ingerir documento: {error}",
-        )
-
-
-@router.post("/upload")
-def upload_document(
-    file: UploadFile = File(...),
-    _auth: None = Depends(require_api_key),
-):
-    """Salva o PDF enviado, sem processar chunks nem indexar no vector store."""
-    try:
-        saved_file = save_uploaded_file(file)
-
-        return {
-            "message": "Arquivo enviado com sucesso.",
-            "document": saved_file,
-        }
-
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
-
-
-@router.post("/extract-text")
-def extract_document_text(
-    file_path: str,
-    _auth: None = Depends(require_api_key),
-):
-    """Extrai o texto de um PDF ja salvo e retorna uma previa das paginas."""
-    try:
-        safe_file_path = ensure_path_inside_directory(
-            path_value=file_path,
-            base_dir=UPLOADS_DIR,
-            label="file_path",
-        )
-
-        result = extract_text_from_pdf(safe_file_path)
-
-        preview_pages = []
-
-        for page in result["pages"][:3]:
-            preview_pages.append(
-                {
-                    "page": page["page"],
-                    "char_count": page["char_count"],
-                    "preview": page["text"][:500],
-                }
-            )
-
-        return {
-            "message": "Texto extraído com sucesso.",
-            "file_path": result["file_path"],
-            "total_pages": result["total_pages"],
-            "total_chars": result["total_chars"],
-            "preview_pages": preview_pages,
-        }
-
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
 
 
 @router.post("/chunk")
@@ -590,7 +467,7 @@ def search_document_chunks(
             )
 
         return {
-            "message": "Busca semântica realizada com sucesso.",
+            "message": "Busca semÃ¢ntica realizada com sucesso.",
             "collection_name": collection_name,
             "query": query,
             "total_results": len(results),
@@ -745,7 +622,7 @@ def start_smart_ingest(
         theme = find_theme_by_id(theme_id)
 
         if theme is None:
-            raise ValueError("Tema informado não encontrado.")
+            raise ValueError("Tema informado nÃ£o encontrado.")
 
         saved_file = save_uploaded_file(file)
 
@@ -779,7 +656,7 @@ def start_smart_ingest(
         }
 
     except ValueError as error:
-        logger.warning("Falha de validação ao iniciar smart ingest: %s", error)
+        logger.warning("Falha de validaÃ§Ã£o ao iniciar smart ingest: %s", error)
         raise HTTPException(status_code=400, detail=str(error))
     except Exception as error:
         logger.exception("Erro inesperado ao iniciar smart ingest")

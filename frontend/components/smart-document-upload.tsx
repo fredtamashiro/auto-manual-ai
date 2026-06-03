@@ -1,6 +1,14 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+  Info,
+  Loader2,
+  UploadCloud,
+} from "lucide-react";
 
 import {
   getProcessingJob,
@@ -9,6 +17,18 @@ import {
   startSmartIngest,
   Theme,
 } from "@/services/api";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Select } from "@/components/ui/select";
 
 type SmartDocumentUploadProps = {
   onCompleted?: () => void;
@@ -109,35 +129,40 @@ export function SmartDocumentUpload({ onCompleted }: SmartDocumentUploadProps) {
 
   const isProcessing =
     job?.status === "pending" || job?.status === "processing";
+  const processedChunks = job?.partial_result?.processed_chunks;
+  const totalChunks = job?.partial_result?.total_chunks;
+  const hasChunkProgress =
+    processedChunks !== undefined &&
+    processedChunks !== null &&
+    totalChunks !== undefined &&
+    totalChunks !== null;
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-100">
-          Importar documento
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">
+    <Card>
+      <CardHeader>
+        <CardTitle>Importar documento</CardTitle>
+        <CardDescription>
           Envie um PDF e escolha um tema para o processamento inteligente.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
 
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+      <CardContent>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-300">
             Tema do documento
           </label>
 
-          <select
+          <Select
             value={selectedThemeId}
             onChange={(event) => setSelectedThemeId(event.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-blue-500"
           >
             {themes.map((theme) => (
               <option key={theme.theme_id} value={theme.theme_id}>
                 {theme.name}
               </option>
             ))}
-          </select>
+          </Select>
 
           {themes.length > 0 && (
             <p className="mt-2 text-xs text-slate-500">
@@ -154,34 +179,42 @@ export function SmartDocumentUpload({ onCompleted }: SmartDocumentUploadProps) {
             Arquivo PDF
           </label>
 
-          <input
+          <Input
             type="file"
             accept="application/pdf"
             onChange={handleFileChange}
             disabled={isStarting || isProcessing}
-            className="block w-full cursor-pointer rounded-lg border border-slate-700 bg-slate-950 text-sm text-slate-300 file:mr-4 file:border-0 file:bg-blue-600 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer"
           />
 
           {selectedFile && (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+              <FileText className="h-3.5 w-3.5" />
               Arquivo selecionado: {selectedFile.name}
             </p>
           )}
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={isStarting || isProcessing}
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isStarting || isProcessing
-            ? "Processando..."
-            : "Iniciar Smart Ingest"}
-        </button>
+          {isStarting || isProcessing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <UploadCloud className="h-4 w-4" />
+          )}
+          {isStarting || isProcessing ? "Processando..." : "Iniciar Smart Ingest"}
+        </Button>
       </form>
 
       {errorMessage && (
-        <p className="mt-3 text-sm text-red-400">{errorMessage}</p>
+        <Alert className="mt-3 border-red-900/60 bg-red-950/30 text-red-300">
+          <span className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            {errorMessage}
+          </span>
+        </Alert>
       )}
 
       {job && (
@@ -191,7 +224,8 @@ export function SmartDocumentUpload({ onCompleted }: SmartDocumentUploadProps) {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Status do processamento
               </p>
-              <p className="mt-1 text-sm text-slate-200">
+              <p className="mt-1 flex items-center gap-2 text-sm text-slate-200">
+                <Info className="h-4 w-4 text-blue-400" />
                 {job.current_step}
               </p>
             </div>
@@ -201,24 +235,18 @@ export function SmartDocumentUpload({ onCompleted }: SmartDocumentUploadProps) {
             </span>
           </div>
 
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
-            <div
-              className="h-full rounded-full bg-blue-500 transition-all"
-              style={{ width: `${job.progress}%` }}
-            />
-          </div>
+          <Progress className="mt-4" value={job.progress} />
 
           <p className="mt-2 text-xs text-slate-500">
             Progresso: {job.progress}% concluído
           </p>
 
-          {job.partial_result?.processed_chunks &&
-            job.partial_result?.total_chunks && (
+          {hasChunkProgress && (
               <p className="mt-1 text-xs text-slate-500">
-                Chunks processados: {String(job.partial_result.processed_chunks)}{" "}
-                de {String(job.partial_result.total_chunks)}
+                Chunks processados: {String(processedChunks)} de{" "}
+                {String(totalChunks)}
               </p>
-            )}
+          )}
 
           {job.partial_result && (
             <div className="mt-3">
@@ -247,7 +275,8 @@ export function SmartDocumentUpload({ onCompleted }: SmartDocumentUploadProps) {
 
           {job.status === "completed" && job.result?.document && (
             <div className="mt-3 rounded-lg border border-emerald-900/60 bg-emerald-950/30 p-3">
-              <p className="text-sm text-emerald-300">
+              <p className="flex items-center gap-2 text-sm text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
                 Documento processado com sucesso.
               </p>
               <p className="mt-1 text-xs text-emerald-400">
@@ -266,6 +295,7 @@ export function SmartDocumentUpload({ onCompleted }: SmartDocumentUploadProps) {
           )}
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

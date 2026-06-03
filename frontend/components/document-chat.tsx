@@ -1,27 +1,32 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { askQuestion, ChatResponse } from "@/services/api";
 
 type DocumentChatProps = {
   documentId: string;
+  initialQuestion?: string;
+  initialQuestionRequestId?: number;
 };
 
 type ChatMessage = ChatResponse & {
   id: string;
 };
 
-export function DocumentChat({ documentId }: DocumentChatProps) {
+export function DocumentChat({
+  documentId,
+  initialQuestion,
+  initialQuestionRequestId,
+}: DocumentChatProps) {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const lastInitialQuestionRequestId = useRef<number | undefined>(undefined);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedQuestion = question.trim();
+  const submitQuestion = useCallback(async (questionToSubmit: string) => {
+    const trimmedQuestion = questionToSubmit.trim();
 
     if (!trimmedQuestion) {
       setErrorMessage("Digite uma pergunta.");
@@ -52,7 +57,26 @@ export function DocumentChat({ documentId }: DocumentChatProps) {
     } finally {
       setIsLoading(false);
     }
+  }, [documentId]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitQuestion(question);
   }
+
+  useEffect(() => {
+    if (!initialQuestion || initialQuestionRequestId === undefined) {
+      return;
+    }
+
+    if (lastInitialQuestionRequestId.current === initialQuestionRequestId) {
+      return;
+    }
+
+    lastInitialQuestionRequestId.current = initialQuestionRequestId;
+    setQuestion(initialQuestion);
+    void submitQuestion(initialQuestion);
+  }, [initialQuestion, initialQuestionRequestId, submitQuestion]);
 
   return (
     <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4">

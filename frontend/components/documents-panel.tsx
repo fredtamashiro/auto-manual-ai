@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { DocumentChat } from "@/components/document-chat";
-import { DocumentUpload } from "@/components/document-upload";
 import { SmartDocumentUpload } from "@/components/smart-document-upload";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DocumentItem, deleteDocument, fetchDocuments } from "@/services/api";
+
+type SelectedQuestion = {
+  question: string;
+  requestId: number;
+};
 
 export function DocumentsPanel() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedQuestionsByDocument, setSelectedQuestionsByDocument] =
+    useState<Record<string, SelectedQuestion>>({});
 
   async function loadDocuments() {
     try {
@@ -56,10 +65,22 @@ export function DocumentsPanel() {
     }
   }
 
+  function handleSuggestedQuestionClick(
+    documentId: string,
+    suggestedQuestion: string,
+  ) {
+    setSelectedQuestionsByDocument((currentQuestions) => ({
+      ...currentQuestions,
+      [documentId]: {
+        question: suggestedQuestion,
+        requestId: (currentQuestions[documentId]?.requestId ?? 0) + 1,
+      },
+    }));
+  }
+
   return (
     <>
       <SmartDocumentUpload onCompleted={loadDocuments} />
-      <DocumentUpload onUploadSuccess={loadDocuments} />
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
         <div className="mb-6">
@@ -109,25 +130,120 @@ export function DocumentsPanel() {
                   </p>
                   <p>
                     <span className="text-slate-500">Criado em:</span>{" "}
-                    {new Date(document.created_at).toLocaleString("pt-BR")}
+                    {document.created_at
+                      ? new Date(document.created_at).toLocaleString("pt-BR")
+                      : "-"}
                   </p>
                 </div>
+
+                {document.document_type && (
+                  <p className="mt-2 text-xs text-blue-300">
+                    Tipo: {document.document_type}
+                  </p>
+                )}
+
+                {document.theme_name && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Tema: {document.theme_name}
+                  </p>
+                )}
+
+                {document.document_summary && (
+                  <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Resumo automático
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      {document.document_summary}
+                    </p>
+                  </div>
+                )}
+
+                {document.main_topics && document.main_topics.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      Tópicos principais
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {document.main_topics.map((topic) => (
+                        <Badge
+                          key={topic}
+                        >
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {document.suggested_questions &&
+                  document.suggested_questions.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                        Perguntas sugeridas
+                      </p>
+
+                      <div className="mt-2 space-y-2">
+                        {document.suggested_questions.map((suggestedQuestion) => (
+                          <button
+                            key={suggestedQuestion}
+                            type="button"
+                            onClick={() =>
+                              handleSuggestedQuestionClick(
+                                document.document_id,
+                                suggestedQuestion,
+                              )
+                            }
+                            className="block w-full rounded-lg border border-slate-800 bg-slate-950 p-3 text-left text-sm text-slate-300 transition hover:border-blue-900/70 hover:bg-blue-950/20 hover:text-blue-200"
+                          >
+                            {suggestedQuestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {document.summary_limitations &&
+                  document.summary_limitations.length > 0 && (
+                    <div className="mt-3 rounded-lg border border-yellow-900/50 bg-yellow-950/20 p-3">
+                      <p className="text-xs uppercase tracking-wide text-yellow-500">
+                        Limitações identificadas
+                      </p>
+
+                      <ul className="mt-2 list-inside list-disc space-y-1 text-xs leading-5 text-yellow-200/80">
+                        {document.summary_limitations.map((limitation) => (
+                          <li key={limitation}>{limitation}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                 <p className="mt-3 break-all text-xs text-slate-600">
                   ID: {document.document_id}
                 </p>
 
                 <div className="mt-4 flex justify-end">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleDeleteDocument(document.document_id)}
-                    className="rounded-lg border border-red-900/60 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-950/40"
+                    variant="destructive"
+                    size="sm"
                   >
+                    <Trash2 className="h-3.5 w-3.5" />
                     Apagar
-                  </button>
+                  </Button>
                 </div>
 
-                <DocumentChat documentId={document.document_id} />
+                <DocumentChat
+                  documentId={document.document_id}
+                  initialQuestion={
+                    selectedQuestionsByDocument[document.document_id]?.question
+                  }
+                  initialQuestionRequestId={
+                    selectedQuestionsByDocument[document.document_id]?.requestId
+                  }
+                />
               </article>
             ))}
           </div>
