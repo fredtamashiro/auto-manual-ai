@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Request
 
 from app.graph.manual_graph import answer_question_with_manual_graph
-from app.schemas.chat import ChatByCollectionRequest, ChatRequest, ChatResponse
+from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.document_registry_service import find_registered_document_by_id
 from app.services.rate_limit_service import check_chat_rate_limit
 from app.services.theme_service import format_theme_rules, get_theme_or_default
@@ -128,25 +128,6 @@ def ask_question(
                 query_rules=query_rules,
                 answer_rules=answer_rules,
             )
-
-        return ChatResponse(
-            question=result["question"],
-            answer=result["answer"],
-            sources=result["sources"],
-        )
-
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
-
-@router.post("/ask-by-collection", response_model=ChatResponse)
-def ask_question_by_collection(payload: ChatByCollectionRequest):
-    """Responde uma pergunta usando diretamente o nome da collection vetorial."""
-    try:
-        result = answer_question_with_manual_graph(
-            collection_name=payload.collection_name,
-            question=payload.question,
-            k=payload.k,
-        )
 
         return ChatResponse(
             question=result["question"],

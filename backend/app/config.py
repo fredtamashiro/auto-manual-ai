@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     """Centraliza as configuracoes da aplicacao lidas do ambiente."""
+    app_env: str = "development"
     openai_api_key: str
     app_api_key: str | None = None
 

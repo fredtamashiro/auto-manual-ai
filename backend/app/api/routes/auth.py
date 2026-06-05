@@ -105,6 +105,14 @@ def logout(response: Response):
 # Endpoint temporario para ambiente local/demo.
 @router.post("/admin/seed")
 def seed_admin_user(payload: SeedAdminRequest):
+    settings = get_settings()
+
+    if settings.app_env.lower() == "production":
+        raise HTTPException(
+            status_code=403,
+            detail="Endpoint indisponivel em producao.",
+        )
+
     try:
         return create_admin_user(
             email=payload.email,

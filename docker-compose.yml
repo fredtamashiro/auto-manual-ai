@@ -39,6 +39,25 @@ services:
       - postgres
       - redis
 
+  worker:
+    build:
+      context: ./backend
+    container_name: auto-manual-ai-worker
+    command: rq worker smart_ingest --url redis://redis:6379/0
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/migrations:/app/migrations
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://smartdocs:smartdocs@postgres:5432/smartdocs
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
   frontend:
     build:
       context: ./frontend
