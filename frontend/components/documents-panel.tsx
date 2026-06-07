@@ -94,13 +94,16 @@ export function DocumentsPanel({ adminUser }: DocumentsPanelProps) {
 
   return (
     <>
-      <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <header
+        id="documentos"
+        className="scroll-mt-28 mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+      >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-            SmartDocs IA
-          </h1>
+          <h2 className="heading-2 text-[#1A1A1A]">
+            Documentos e consultas
+          </h2>
           <p className="mt-2 text-slate-600">
-            Assistente inteligente para consulta de documentos em PDF.
+            Acervo central de documentos processados com busca semantica e chat contextual.
           </p>
         </div>
 
@@ -120,11 +123,11 @@ export function DocumentsPanel({ adminUser }: DocumentsPanelProps) {
         />
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-slate-950">
+          <h3 className="heading-3 text-[#1A1A1A]">
             Documentos cadastrados
-          </h2>
+          </h3>
           <p className="text-sm text-slate-500">
             Total de documentos: {documents.length}
           </p>

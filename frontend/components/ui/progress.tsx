@@ -9,11 +9,11 @@ type ProgressProps = React.HTMLAttributes<HTMLDivElement> & {
 export function Progress({ className, value, ...props }: ProgressProps) {
   return (
     <div
-      className={cn("h-2 overflow-hidden rounded-full bg-slate-200", className)}
+      className={cn("h-2 overflow-hidden rounded-full bg-[#d9dde3]", className)}
       {...props}
     >
       <div
-        className="h-full rounded-full bg-blue-600 transition-all"
+        className="h-full rounded-full bg-[#99FF33] transition-all"
         style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
       />
     </div>
