@@ -24,6 +24,7 @@ GRAPH_TIMING_KEYS = (
     "relevance_grader_ms",
     "answer_generation_ms",
 )
+SOURCE_PREVIEW_MAX_CHARS = 900
 
 
 class ManualGraphState(TypedDict):
@@ -92,6 +93,21 @@ def _measure_step(
     next_state = callback()
     duration_ms = int((perf_counter() - started_at) * 1000)
     return _append_timing(next_state, name, duration_ms)
+
+
+def _truncate_text_safely(text: str, max_chars: int) -> str:
+    normalized_text = " ".join((text or "").split())
+
+    if len(normalized_text) <= max_chars:
+        return normalized_text
+
+    truncated_text = normalized_text[:max_chars].rstrip()
+    last_space_index = truncated_text.rfind(" ")
+
+    if last_space_index >= max_chars // 2:
+        truncated_text = truncated_text[:last_space_index].rstrip()
+
+    return f"{truncated_text}..."
 
 
 def create_chat_model() -> ChatOpenAI:
@@ -749,7 +765,10 @@ def format_sources(state: ManualGraphState) -> ManualGraphState:
             "chunk_index": metadata.get("chunk_index"),
             "score": chunk["score"],
             "matched_query": chunk.get("matched_query"),
-            "preview": chunk["content"][:300],
+            "preview": _truncate_text_safely(
+                chunk.get("content", ""),
+                SOURCE_PREVIEW_MAX_CHARS,
+            ),
         }
 
         if "relevance_score" in metadata:
